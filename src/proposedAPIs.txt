@@ -1,0 +1,10 @@
+Proposed Endpoints:
+
+GET /status: Get system status (CCT, intensity, auto_mode, connected devices, etc.).
+POST /set_cct: Set color temperature (CCT).
+POST /set_intensity: Set intensity.
+POST /toggle_system: Turn system on/off.
+POST /set_mode: Switch between auto/manual mode.
+POST /activate_scene: Activate a scene.
+POST /load_scene: Load a scene for preview.
+POST /stop_scheduler: Stop the running scheduler.

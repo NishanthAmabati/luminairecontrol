@@ -1,0 +1,51 @@
+Your_Intensity = (HA_Brightness / 255) * 500
+set_level:
+  service: rest_command.lcs_set_intensity
+  data_template:
+    intensity: "{{ (brightness / 255 * 500) | int }}"
+
+HA_Brightness = (Your_Intensity / 500) * 255
+level_template: "{{ (state_attr('sensor.current_intensity', 'value') | float / 500 * 255) | int }}"
+
+Min CCT (3500K): Mireds = 1,000,000 / 3500 = 285.7
+
+Max CCT (6500K): Mireds = 1,000,000 / 6500 = 153.8
+
+Your_CCT = 1,000,000 / HA_Mireds
+
+set_color_temp:
+  service: rest_command.lcs_set_cct
+  data_template:
+    cct: "{{ (1000000 / color_temp) | int }}"
+
+HA_Mireds = 1,000,000 / Your_CCT
+
+color_temp_template: "{{ (1000000 / state_attr('sensor.current_cct', 'value') | float) | int }}"
+
+light:
+  - platform: template
+    lights:
+      luminaire_light:
+        friendly_name: "Luminaire"
+        turn_on:
+          service: rest_command.lcs_toggle_system
+          data:
+            isSystemOn: true
+        turn_off:
+          service: rest_command.lcs_toggle_system
+          data:
+            isSystemOn: false
+        set_level:
+          service: rest_command.lcs_set_intensity
+          data_template:
+            intensity: "{{ (brightness / 255 * 100) | int }}" # Example: convert HA's 0-255 to your system's 0-100
+        set_color_temp:
+          service: rest_command.lcs_set_cct
+          data_template:
+            cct: "{{ state_attr('light.luminaire_light', 'color_temp') }}" # Example: use the color_temp from the light itself
+        value_template: "{{ is_state('sensor.system_status', 'on') }}"
+        level_template: "{{ (state_attr('sensor.current_intensity', 'value') | float / 100 * 255) | int }}" # Example: convert your system's 0-100 to HA's 0-255
+        color_temp_template: "{{ state_attr('sensor.current_cct', 'value') }}"
+        supported_color_modes:
+          - color_temp
+          - brightness
