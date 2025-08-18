@@ -43,36 +43,32 @@ class LuminaireServer:
         self.server = None
         self.app = FastAPI()
         self.app.state.luminaire_server = self  # Store the server instance in app.state
-        #self.api_key_header = APIKeyHeader(name="Authorization")
         logging.debug("LuminaireServer initialized")
-        # Register FastAPI endpoints
-        self.app.get("/status")(self.get_status)
-        self.app.get("/status/essentials")(self.get_essentials)
-        self.app.get("/status/luminaires")(self.get_luminaires)
-        self.app.get("/status/cct")(self.get_cct)
-        self.app.get("/status/intensity")(self.get_intenstiy)
-        self.app.post("/set_cct")(self.set_cct)
-        self.app.post("/set_intensity")(self.set_intensity)
-        self.app.post("/set_mode")(self.set_mode)
-        self.app.post("/toggle_system")(self.toggle_system)
-        self.app.post("/load_scene")(self.load_scene)
-        self.app.post("/activate_scene")(self.activate_scene)
-        self.app.post("/stop_scheduler")(self.stop_scheduler)
+        
+        # Register FastAPI endpoints with API key dependency
+        self.app.get("/status", dependencies=[Depends(self.verify_api_key)])(self.get_status)
+        self.app.get("/status/essentials", dependencies=[Depends(self.verify_api_key)])(self.get_essentials)
+        self.app.get("/status/luminaires", dependencies=[Depends(self.verify_api_key)])(self.get_luminaires)
+        self.app.get("/status/cct", dependencies=[Depends(self.verify_api_key)])(self.get_cct)
+        self.app.get("/status/intensity", dependencies=[Depends(self.verify_api_key)])(self.get_intenstiy)
+        self.app.post("/set_cct", dependencies=[Depends(self.verify_api_key)])(self.set_cct)
+        self.app.post("/set_intensity", dependencies=[Depends(self.verify_api_key)])(self.set_intensity)
+        self.app.post("/set_mode", dependencies=[Depends(self.verify_api_key)])(self.set_mode)
+        self.app.post("/toggle_system", dependencies=[Depends(self.verify_api_key)])(self.toggle_system)
+        self.app.post("/load_scene", dependencies=[Depends(self.verify_api_key)])(self.load_scene)
+        self.app.post("/activate_scene", dependencies=[Depends(self.verify_api_key)])(self.activate_scene)
+        self.app.post("/stop_scheduler", dependencies=[Depends(self.verify_api_key)])(self.stop_scheduler)
 
-    '''async def verify_api_key(self, api_key: str = Depends(self.api_key_header)):
-        expected_key = self.config.get("server", {}).get("api_key", "your-secret-key")
+    async def verify_api_key(self, api_key: str = Depends(APIKeyHeader(name="Authorization"))):
+        try:
+            expected_key = self.config["server"]["api_key"]
+        except KeyError:
+            raise HTTPException(status_code=500, detail="API key not configured in config.yaml")
+        if not expected_key:
+            raise HTTPException(status_code=500, detail="API key is empty in config.yaml")
         if api_key != f"Bearer {expected_key}":
             raise HTTPException(status_code=401, detail="Invalid API key")
         return api_key
-
-    def get_server(self):
-        return self'''
-    def get_server(self):
-        async def server_dependency():
-            if not hasattr(self.app.state, "luminaire_server"):
-                raise HTTPException(status_code=500, detail="Server not initialized")
-            return self.app.state.luminaire_server
-        return server_dependency
 
     async def emit_status_update(self, websocket):
         """Emit a status update to a WebSocket client."""
@@ -542,6 +538,7 @@ class LuminaireServer:
         return {"status": "success", "current cct": self.state["current_intensity"]}
 
     async def set_cct(self, control: CctControl):
+    #async def set_cct(self, control: CctControl):
         #async with self.luminaire_ops._state_lock:
             #async with self.luminaire_ops._devices_lock:
         if not self.luminaire_ops.devices:
@@ -563,6 +560,7 @@ class LuminaireServer:
         return {"status": "success", "cct": control.cct}
 
     async def set_intensity(self, control: IntensityControl):
+    #async def set_intensity(self, control: IntensityControl):
         #async with self.luminaire_ops._state_lock:
         #    async with self.luminaire_ops._devices_lock:
         if not self.luminaire_ops.devices:

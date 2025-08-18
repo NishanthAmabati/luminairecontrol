@@ -8,6 +8,7 @@ server:
   websocket_port: 5000
   fastapi_host: "0.0.0.0"
   fastapi_port: 8000
+  api_key: "secretapikey"
   max_connections: 350
 
 # Luminaire Operations Configuration
@@ -32,7 +33,6 @@ luminaire_operations:
 # Logging Configuration
 logging:
   level: "DEBUG"
-  #log_dir: "/var/log/luminaire-control/"
   log_dir: "logs/"
   filename_template: "%Y%m%d%H%M%S.log"
   rotation_when: "midnight"
